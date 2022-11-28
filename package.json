@@ -1,11 +1,11 @@
 {
   "name": "living-wccell",
   "description": "Webcomponent living-wccell following open-wc recommendations",
-  "license": "MIT",
+  "license": "APACHE-2.0",
   "author": "living-wccell",
-  "version": "0.0.0",
-  "main": "index.js",
-  "module": "index.js",
+  "version": "1.0.0",
+  "main": "living-wccell.js",
+  "module": "living-wccell.js",
   "scripts": {
     "analyze": "cem analyze --litelement",
     "start": "web-dev-server",
