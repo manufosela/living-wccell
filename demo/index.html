@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        background: #fafafa;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="demo"></div>
+
+    <script type="module" src="../living-wccell.js"></script>
+    <script>
+      function insertCell(id) {
+        const livingWCcell = `<living-wccell id="${id}"></living-wccell>`;
+        document.body.insertAdjacentHTML('beforeend', livingWCcell);
+      }
+      function createCells(numCells) {
+        for (let cell = 0; cell < numCells; cell += 1) {
+          insertCell(`cell-${cell}`);
+        }
+      }
+      createCells(10);
+    </script>
+  </body>
+</html>
