@@ -20,10 +20,13 @@ export class LivingWccell extends LitElement {
 
   constructor() {
     super();
+    this._maxWidth = 800;
+    this._maxHeight = 600;
+    this._maxRadius = 50;
     this.id = `wccell-${  this.randomNum(1, 1000)  }-${  new Date().getTime()}`;
     this.position = {
-      top: `${this.randomNum(50, 600)}px`,
-      left: `${this.randomNum(50, 800)}px`
+      top: `${this.randomNum(this._maxRadius, this._maxHeight - this._maxRadius)}px`,
+      left: `${this.randomNum(this._maxRadius, this._maxWidth - this._maxRadius)}px`
     };
     this.diameter = '10px';
     this.type = this.randomNum(0, 3);
@@ -44,7 +47,7 @@ export class LivingWccell extends LitElement {
     this.death = this.death.bind(this);
     this.growth = this.growth.bind(this);
     this.move = this.move.bind(this);
-    this._searchForACell = this._setForACell.bind(this);
+    this._searchForACell = this._searchForACell.bind(this);
     this._stopLife = this._stopLife.bind(this);
   }
 
@@ -72,9 +75,27 @@ export class LivingWccell extends LitElement {
   }
 
   move() {
-    this.position.top = `${parseInt(this.position.top, 10) + this.randomNum(-10, 10)}px`;
-    this.position.left = `${parseInt(this.position.left, 10) + this.randomNum(-10, 10)}px`;
-    // dispatch event to notify other cells
+    const newTop = parseInt(this.position.top, 10) + this.randomNum(-10, 10);
+    const newLeft = parseInt(this.position.left, 10) + this.randomNum(-10, 10);
+    if (newTop >= 0 && newTop <= this._maxHeight - this._maxRadius) {
+      this.position.top = `${newTop}px`;
+    }
+    if (newLeft >= 0 && newLeft <= this._maxWidth - this._maxRadius) {
+      this.position.left = `${newLeft}px`;
+    }
+    this._livingWccellMoveEvent();
+    this._setStyles();
+  }
+
+  growth() {
+    this.age += 1;
+    if (parseInt(this.diameter, 10) < 50) {
+      this.diameter = `${parseInt(this.diameter, 10) + 5}px`;
+      this._setStyles();
+    }
+  }
+
+  _livingWccellMoveEvent() {
     document.dispatchEvent(
       new CustomEvent('living-wccell-move', {
         detail: {
@@ -85,15 +106,6 @@ export class LivingWccell extends LitElement {
         }
       })
     );
-    this._setStyles();
-  }
-
-  growth() {
-    this.age += 1;
-    if (parseInt(this.diameter, 10) < 50) {
-      this.diameter = `${parseInt(this.diameter, 10) + 5}px`;
-      this._setStyles();
-    }
   }
 
   _setStyles() {
@@ -108,7 +120,7 @@ export class LivingWccell extends LitElement {
     }
   }
 
-  _setForACell(e) {
+  _searchForACell(e) {
     if (e.detail.id !== this.id) {
       // console.log(this._doItFoundACell(e));
       if (this._doItFoundACell(e)) {
@@ -135,7 +147,7 @@ export class LivingWccell extends LitElement {
       if (this.age >= this.cycle.reproduction) {
         this._insertCell(e);
       }
-      console.log(`${this.id} found a cell with id ${e.detail.id}`);
+      // console.log(`${this.id} found a cell with id ${e.detail.id}`);
       this.memory.push(e.detail.id);
       // dispatch stopLife event
       // document.dispatchEvent(new CustomEvent('living-wccell-STOP'));
@@ -152,16 +164,19 @@ export class LivingWccell extends LitElement {
   _insertCell(e) {
     const idParts = this.id.split('-');
     const idPartsDetail = e.detail.id.split('-');
-    const id = `${idParts[0]}-${idParts[1]}-${idPartsDetail[1]}-${new Date().getTime()}`;
-    console.log(id);
+    const id = `${idParts[0]}-${idParts[1]+idPartsDetail[1]}-${new Date().getTime()}`;
+    console.log(`created cell with id ${id}`);
     if (!document.getElementById(id)) {
       const livingWCcell = `<living-wccell id="${id}"></living-wccell>`;
       document.body.insertAdjacentHTML('beforeend', livingWCcell);
       setTimeout(() => {
-        document.getElementById(id).position = {
-          top: `${parseInt(this.position.top, 10) + 50}px`,
-          left: `${parseInt(this.position.left, 10) + 50}px`
-        };
+        const newCell = document.getElementById(id);
+        if (newCell) {
+          newCell.position = {
+            top: `${parseInt(this.position.top, 10) + 50}px`,
+            left: `${parseInt(this.position.left, 10) + 50}px`
+          };
+        }
       }, 100);
     }
   }

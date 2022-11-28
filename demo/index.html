@@ -5,6 +5,9 @@
     <style>
       body {
         background: #fafafa;
+        border: 1px solid black;
+        width: 800px;
+        height: 600px;
       }
     </style>
   </head>
@@ -22,7 +25,15 @@
           insertCell(`cell-${cell}`);
         }
       }
-      createCells(10);
+      function police() {
+        const numCells = document.querySelectorAll('living-wccell').length;
+        if (numCells > 200) {
+          document.dispatchEvent(new CustomEvent('living-wccell-STOP'));
+          console.log('living-wccell STOPPED with', numCells, 'cells');
+        }
+      }
+      createCells(32);
+      setInterval(police, 5000);
     </script>
   </body>
 </html>
