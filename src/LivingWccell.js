@@ -63,6 +63,8 @@ export class LivingWccell extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this._stopLife();
+    document.removeEventListener('living-wccell-move', this._searchForACell);
+    document.removeEventListener('living-wccell-STOP', this._stopLife);
   }
 
   firstUpdated() {
