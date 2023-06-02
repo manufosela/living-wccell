@@ -56,14 +56,14 @@ export class LivingWccell extends LitElement {
     this._deathTimer = setTimeout(this.death, this._deathTime);
     this.growthId = setInterval(this.growth, this._growthTime);
     this.moveId = setInterval(this.move, this._moveTime);
-    document.addEventListener('living-wccell-move', this._searchForACell);
+    // document.addEventListener('living-wccell-move', this._searchForACell);
     document.addEventListener('living-wccell-STOP', this._stopLife);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._stopLife();
-    document.removeEventListener('living-wccell-move', this._searchForACell);
+    // document.removeEventListener('living-wccell-move', this._searchForACell);
     document.removeEventListener('living-wccell-STOP', this._stopLife);
   }
 
