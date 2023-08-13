@@ -52,7 +52,7 @@ export class LivingWccell extends LitElement {
     this._searchForACell = this._searchForACell.bind(this);
     this._stopLife = this._stopLife.bind(this);
 
-    this.modeMove = 'world';
+    this.modeMove = 'near';
     this.moveType = {
       'near': this.moveMode1,
       'world': this.moveMode2,
@@ -63,13 +63,15 @@ export class LivingWccell extends LitElement {
     this.angle = parseInt(Math.random() * 360, 10);
     this.speed = Math.random() * (this.maxSpeed - this.minSpeed) + this.minSpeed;
 
+    this.reproductionStatus = true;
+    this.stopStatus = false;
   }
 
   connectedCallback() {
     super.connectedCallback();
     this._deathTimer = setTimeout(this.death, this._deathTime);
     this.growthId = setInterval(this.growth, this._growthTime);
-    this.moveId = setInterval(this.move, this._moveTime);
+    // this.moveId = setInterval(this.move, this._moveTime);
     document.addEventListener('living-wccell-move', this._searchForACell);
     document.addEventListener('living-wccell-STOP', this._stopLife);
   }
@@ -103,6 +105,10 @@ export class LivingWccell extends LitElement {
     }
     this._livingWccellMoveEvent();
     this._setStyles();
+
+    if (!this.stopStatus) {
+      requestAnimationFrame(this.moveMode1.bind(this));
+    }
   }
 
   moveMode2() {
@@ -123,7 +129,9 @@ export class LivingWccell extends LitElement {
     this._livingWccellMoveEvent();
     this._setStyles();
  
-    // requestAnimationFrame(this.moveMode2.call(this));
+    if (!this.stopStatus) {
+      requestAnimationFrame(this.moveMode2.bind(this));
+    }
   }
 
   growth() {
@@ -183,7 +191,7 @@ export class LivingWccell extends LitElement {
 
   _otherCellFound(e) {
     if (!this.memory.includes(e.detail.id)) {
-      if (this.age >= this.cycle.reproduction) {
+      if (this.age >= this.cycle.reproduction && this.reproductionStatus) {
         this._insertCell(e);
       }
       // console.log(`${this.id} found a cell with id ${e.detail.id}`);
@@ -193,10 +201,15 @@ export class LivingWccell extends LitElement {
     }
   }
 
+  _stopReproduction() {
+    this.reproductionStatus = false;
+  }
+
   _stopLife() {
+    this.stopStatus = true;
     clearInterval(this.growthId);
-    clearInterval(this.moveId);
     clearTimeout(this._deathTimer);
+    // clearInterval(this.moveId);
     document.removeEventListener('living-wccell-move', this._searchForACell);
   }
 
@@ -228,6 +241,7 @@ export class LivingWccell extends LitElement {
   firstUpdated() {
     this._cellStyles = this.shadowRoot.querySelector('.cell').style;
     this._setStyles();
+    this.move();
   }
 
   render() {
