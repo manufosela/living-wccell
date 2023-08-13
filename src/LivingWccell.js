@@ -7,10 +7,11 @@ export class LivingWccell extends LitElement {
     return  {
       position: { type: Object },
       diameter: { type: String },
-      type: { type: String },
+      type: { type: Number },
       cycle: { type: Object },
       age: { type: Number },
-      memory: { type: Array }
+      memory: { type: Array },
+      worldLayer: { type: Object }
     }
   };
 
@@ -23,6 +24,7 @@ export class LivingWccell extends LitElement {
     this._maxWidth = 800;
     this._maxHeight = 600;
     this._maxRadius = 50;
+    this.worldLayer = this.parentElement;
     this.id = `wccell-${  this.randomNum(1, 1000)  }-${  new Date().getTime()}`;
     this.position = {
       top: `${this.randomNum(this._maxRadius, this._maxHeight - this._maxRadius)}px`,
@@ -67,18 +69,16 @@ export class LivingWccell extends LitElement {
     document.removeEventListener('living-wccell-STOP', this._stopLife);
   }
 
-  firstUpdated() {
-    this._setStyles();
-  }
-
   death() {
     this.dispatchEvent(new CustomEvent('living-wccell-death', { detail: this.id }));
     this.remove();
   }
 
   move() {
-    const newTop = parseInt(this.position.top, 10) + this.randomNum(-10, 10);
-    const newLeft = parseInt(this.position.left, 10) + this.randomNum(-10, 10);
+    const parsedTop = parseInt(this.position.top, 10);
+    const parsedLeft = parseInt(this.position.left, 10);
+    const newTop = parsedTop + this.randomNum(-10, 10);
+    const newLeft = parsedLeft + this.randomNum(-10, 10);
     if (newTop >= 0 && newTop <= this._maxHeight - this._maxRadius) {
       this.position.top = `${newTop}px`;
     }
@@ -111,7 +111,7 @@ export class LivingWccell extends LitElement {
   }
 
   _setStyles() {
-    const styles = this.shadowRoot.querySelector('.cell').style;
+    const styles = this._cellStyles;
     styles.top = `${this.position.top}`;
     styles.left = `${this.position.left}`;
     styles.width = this.diameter;
@@ -167,10 +167,10 @@ export class LivingWccell extends LitElement {
     const idParts = this.id.split('-');
     const idPartsDetail = e.detail.id.split('-');
     const id = `${idParts[0]}-${idParts[1]+idPartsDetail[1]}-${new Date().getTime()}`;
-    console.log(`created cell with id ${id}`);
+    // console.log(`created cell with id ${id}`);
     if (!document.getElementById(id)) {
       const livingWCcell = `<living-wccell id="${id}"></living-wccell>`;
-      document.body.insertAdjacentHTML('beforeend', livingWCcell);
+      this.worldLayer.insertAdjacentHTML('beforeend', livingWCcell);
       setTimeout(() => {
         const newCell = document.getElementById(id);
         if (newCell) {
@@ -186,6 +186,11 @@ export class LivingWccell extends LitElement {
   randomNum(min, max) {
     this._null = null;
     return parseInt(Math.random() * (max + 1 - min), 10) + min;
+  }
+
+  firstUpdated() {
+    this._cellStyles = this.shadowRoot.querySelector('.cell').style;
+    this._setStyles();
   }
 
   render() {
