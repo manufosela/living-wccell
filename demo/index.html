@@ -3,22 +3,68 @@
   <head>
     <meta charset="utf-8" />
     <style>
-      body {
+      header {
+        margin: 0.5rem 0;
+      }
+
+      main {
+        float:left;
+        width:400px;
+        display:flex;
+        flex-direction: column;
+        margin: 0 1rem;
+      }
+
+      .cellsworld {
+        float:left;
         background: #fafafa;
         border: 1px solid black;
         width: 800px;
         height: 600px;
+        opacity: 1;
       }
+
+      aside {
+        padding: 1rem;
+      }
+
+      footer {
+        position: absolute;
+        top: 650px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+
     </style>
   </head>
   <body>
-    <div id="demo"></div>
+    <section class="cellsworld"></section>
+    <main>
+      <header>
+        <h1>Cells System</h1>
+        <label for="numcells">Num Cells: <input type="number" id="numcells" name="numcells" value="32"></label>
+        <button id="btnStart">Start</button>
+      </header>
+      <section>
+        <li>Introcuce el número de células que quieres que se creen inicialmente y pulsa start.
+        <li>Se crean ese número de células, todas con edad 0.
+        <li>Cada segundo, su edad aumenta hasta un máximo de entre 18 y 25, cada celula tiene un maximo de edad definido cuando nace.
+        <li>Cuando cumplen su edad máxima desaparece.
+        <li>Son fertiles con una edad de entre 8 y 15.
+        <li>Se repoducen por contacto con otra celula, creando una nueva celula en un lugar aleatorio del mundo.
+        <li>Solo se pueden reproducir una vez con la misma celula.
+        <li>Todas las celulas se mueven aleatoriamente dentro de un radio de +/-10px desde su ultima posición
+        <li>El sistema detecta si se llega a un máximo de 200 celulas creadas y para el mundo
+      </section>
+    </main>
 
     <script type="module" src="../living-wccell.js"></script>
     <script>
       function insertCell(id) {
         const livingWCcell = `<living-wccell id="${id}"></living-wccell>`;
-        document.body.insertAdjacentHTML('beforeend', livingWCcell);
+        document.querySelector('.cellsworld').insertAdjacentHTML('beforeend', livingWCcell);
       }
       function createCells(numCells) {
         for (let cell = 0; cell < numCells; cell += 1) {
@@ -26,14 +72,27 @@
         }
       }
       function police() {
-        const numCells = document.querySelectorAll('living-wccell').length;
+        const numCells = document.querySelectorAll("living-wccell").length;
         if (numCells > 200) {
-          document.dispatchEvent(new CustomEvent('living-wccell-STOP'));
-          console.log('living-wccell STOPPED with', numCells, 'cells');
+          document.dispatchEvent(new CustomEvent("living-wccell-STOP"));
+          console.log("living-wccell STOPPED with", numCells, "cells");
         }
       }
-      createCells(32);
-      setInterval(police, 5000);
+      function start() {
+        [...document.querySelectorAll("living-wccell")].forEach((el) => {
+          if (el) {
+            el.remove();
+          }
+        });
+        const numCells = document.getElementById("numcells").value;
+        createCells(numCells);
+        setInterval(police, 5000);
+      }
+
+      window.onload = () => {
+        document.getElementById("btnStart").addEventListener("click", start);
+      };
+
     </script>
   </body>
 </html>
