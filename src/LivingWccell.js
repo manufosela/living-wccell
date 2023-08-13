@@ -11,7 +11,8 @@ export class LivingWccell extends LitElement {
       cycle: { type: Object },
       age: { type: Number },
       memory: { type: Array },
-      worldLayer: { type: Object }
+      worldLayer: { type: Object },
+      modeMove: { type: String, attribute: 'mode-move' },
     }
   };
 
@@ -52,10 +53,10 @@ export class LivingWccell extends LitElement {
     this._searchForACell = this._searchForACell.bind(this);
     this._stopLife = this._stopLife.bind(this);
 
-    this.modeMove = 'near';
+    this.modeMove = 'vibration';
     this.moveType = {
-      'near': this.moveMode1,
-      'world': this.moveMode2,
+      'vibration': this.moveMode1,
+      'lineal': this.moveMode2,
     };
 
     this.minSpeed = 5;
