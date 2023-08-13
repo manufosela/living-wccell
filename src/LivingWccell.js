@@ -51,6 +51,18 @@ export class LivingWccell extends LitElement {
     this.move = this.move.bind(this);
     this._searchForACell = this._searchForACell.bind(this);
     this._stopLife = this._stopLife.bind(this);
+
+    this.modeMove = 'world';
+    this.moveType = {
+      'near': this.moveMode1,
+      'world': this.moveMode2,
+    };
+
+    this.minSpeed = 5;
+    this.maxSpeed = 10;
+    this.angle = parseInt(Math.random() * 360, 10);
+    this.speed = Math.random() * (this.maxSpeed - this.minSpeed) + this.minSpeed;
+
   }
 
   connectedCallback() {
@@ -75,6 +87,10 @@ export class LivingWccell extends LitElement {
   }
 
   move() {
+    this.moveType[this.modeMove].call(this);
+  }
+
+  moveMode1() {
     const parsedTop = parseInt(this.position.top, 10);
     const parsedLeft = parseInt(this.position.left, 10);
     const newTop = parsedTop + this.randomNum(-10, 10);
@@ -87,6 +103,27 @@ export class LivingWccell extends LitElement {
     }
     this._livingWccellMoveEvent();
     this._setStyles();
+  }
+
+  moveMode2() {
+    const radians = this.angle * (Math.PI / 180);
+    const dx = Math.cos(radians) * this.speed;
+    const dy = Math.sin(radians) * this.speed;
+    this.position.left = `${parseInt(this.position.left, 10) + dx  }`;
+    this.position.top = `${parseInt(this.position.top, 10) + dy  }`;
+     if (this.position.left < 0 || this.position.left > (this._maxWidth - parseInt(this.diameter, 10))) {
+      this.angle = 180 - this.angle;
+    }
+     if (this.position.top < 0 || this.position.top > (this._maxHeight - parseInt(this.diameter, 10))) {
+      this.angle = 360 - this.angle;
+    }
+    this.position.top += 'px';
+    this.position.left += 'px';
+  
+    this._livingWccellMoveEvent();
+    this._setStyles();
+ 
+    // requestAnimationFrame(this.moveMode2.call(this));
   }
 
   growth() {
