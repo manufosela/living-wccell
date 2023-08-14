@@ -7,6 +7,8 @@ export class LivingWccell extends LitElement {
     return  {
       id: { type: String },
       position: { type: Object },
+      top: { type: String, reflect: true },
+      left: { type: String, reflect: true },
       diameter: { type: String },
       type: { type: Number },
       cycle: { type: Object },
@@ -32,11 +34,8 @@ export class LivingWccell extends LitElement {
     this._maxRadius = 50;
     this.worldLayer = this.parentElement;
     this.id = `wccell-${  this.randomNum(1, 1000)  }-${  new Date().getTime()}`;
-    this.position = {
-      top: `${this.randomNum(this._maxRadius, this._maxHeight - this._maxRadius)}px`,
-      left: `${this.randomNum(this._maxRadius, this._maxWidth - this._maxRadius)}px`
-    };
     this.diameter = '10px';
+    this.position = { top: this.top, left: this.left};
     this.type = this.randomNum(0, 3);
     this.color = this.randomNum(0, 36);
     this.age = 0;
@@ -75,6 +74,13 @@ export class LivingWccell extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    if (this.top === undefined) {
+      this.top = `${this.randomNum(this._maxRadius, this._maxHeight - this._maxRadius)}px`;
+    }
+    if (this.left === undefined) {
+      this.left= `${this.randomNum(this._maxRadius, this._maxWidth - this._maxRadius)}px`;
+    }
+    this.position = { top: this.top, left: this.left};
     document.addEventListener('living-wccell_STOP', this._stopMyLife);
     document.addEventListener('living-wccell_RESTART', this._restartMyLife);
     this._startMyLife();
@@ -176,12 +182,18 @@ export class LivingWccell extends LitElement {
     );
   }
 
+  _getContrastColor() {
+    const luminance = (0.299 * this.color + 0.587 * this.color + 0.114 * this.color) / 36;
+    return luminance > 0.5 ? 'black' : 'white';
+  }
+
   _setStyles() {
     const styles = this._cellStyles;
     styles.top = `${this.position.top}`;
     styles.left = `${this.position.left}`;
     styles.width = this.diameter;
     styles.height = this.diameter;
+    styles.color = this._getContrastColor();
     styles.backgroundColor = `hsl(${this.color * 10}, 100%, 50%)`;
     if (this.age === this.cycle.life - 1) {
       styles.animationName = 'death' ;
@@ -262,16 +274,6 @@ export class LivingWccell extends LitElement {
     document.removeEventListener('living-wccell_move', this._searchForACell);
   }
 
-  addPositionCell(id) {
-    const newCell = document.getElementById(id);
-    if (newCell) {
-      newCell.position = {
-        top: this.position.top,
-        left: this.position.left,
-      };
-    }
-  }
-
   _insertCell(e) {
     const idParts = this.id.split('-');
     const idPartsDetail = e.detail.id.split('-');
@@ -279,11 +281,8 @@ export class LivingWccell extends LitElement {
     // console.log(`created cell with id ${id}`);
     if (!document.getElementById(id)) {
       const sterile = (document.querySelectorAll("living-wccell").length >= this.maxCellsControl) ? ' sterile="true"': '';
-      const livingWCcell = `<living-wccell id="${id}" max-cells-control="${this.maxCellsControl}" mode-move="${this.modeMove}"${sterile}></living-wccell>`;
+      const livingWCcell = `<living-wccell id="${id}" max-cells-control="${this.maxCellsControl}" mode-move="${this.modeMove}" top="${this.position.top}" left="${this.position.left}"${sterile}></living-wccell>`;
       this.worldLayer.insertAdjacentHTML('beforeend', livingWCcell);
-      setTimeout(() => {
-        this.addPositionCell(id);
-      }, 100);
     }
   }
 
