@@ -5,6 +5,7 @@ export class LivingWccell extends LitElement {
 
   static get properties() {
     return  {
+      id: { type: String },
       position: { type: Object },
       diameter: { type: String },
       type: { type: Number },
@@ -12,7 +13,11 @@ export class LivingWccell extends LitElement {
       age: { type: Number },
       memory: { type: Array },
       worldLayer: { type: Object },
-      modeMove: { type: String, attribute: 'mode-move' },
+      modeMove: { type: String, attribute: 'mode-move', reflect: true },
+      maxCellsControl: { type: Number, attribute: 'max-cells-control' },
+      sterile: { type: Boolean, reflect: true },
+      gender: { type: String, reflect: true },
+      maxNumSons: { type: Number },
     }
   };
 
@@ -47,45 +52,52 @@ export class LivingWccell extends LitElement {
 
     this._deathTime = this.cycle.life * 1000;
 
-    this.death = this.death.bind(this);
-    this.growth = this.growth.bind(this);
-    this.move = this.move.bind(this);
-    this._searchForACell = this._searchForACell.bind(this);
-    this._stopLife = this._stopLife.bind(this);
+    this._bindingMethods();
 
-    this.modeMove = 'vibration';
+    // this.modeMove = 'vibration';
     this.moveType = {
       'vibration': this.moveMode1,
       'lineal': this.moveMode2,
     };
 
-    this.minSpeed = 5;
-    this.maxSpeed = 10;
+    this.minSpeed = 2;
+    this.maxSpeed = 7;
     this.angle = parseInt(Math.random() * 360, 10);
     this.speed = Math.random() * (this.maxSpeed - this.minSpeed) + this.minSpeed;
 
-    this.reproductionStatus = true;
-    this.stopStatus = false;
-  }
+    this.maxCellsControl = 70;
+    this.sterile = false;
+    this.typeGender = ['male', 'female'];
+    this.gender = this.typeGender[Math.floor(Math.random() * 2)];
+    this.maxNumChildren = 3;
+    this.numChildren = 0;
+ }
 
   connectedCallback() {
     super.connectedCallback();
-    this._deathTimer = setTimeout(this.death, this._deathTime);
-    this.growthId = setInterval(this.growth, this._growthTime);
-    // this.moveId = setInterval(this.move, this._moveTime);
-    document.addEventListener('living-wccell-move', this._searchForACell);
-    document.addEventListener('living-wccell-STOP', this._stopLife);
+    document.addEventListener('living-wccell_STOP', this._stopMyLife);
+    document.addEventListener('living-wccell_RESTART', this._restartMyLife);
+    this._startMyLife();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._stopLife();
-    document.removeEventListener('living-wccell-move', this._searchForACell);
-    document.removeEventListener('living-wccell-STOP', this._stopLife);
+    this._stopMyLife();
+    document.removeEventListener('living-wccell_STOP', this._stopMyLife);
+    document.removeEventListener('living-wccell_RESTART', this._restartMyLife);
+  }
+
+  _bindingMethods() {
+    this.death = this.death.bind(this);
+    this.growth = this.growth.bind(this);
+    this.move = this.move.bind(this);
+    this._searchForACell = this._searchForACell.bind(this);
+    this._stopMyLife = this._stopMyLife.bind(this);
+    this._restartMyLife = this._restartMyLife.bind(this);
   }
 
   death() {
-    this.dispatchEvent(new CustomEvent('living-wccell-death', { detail: this.id }));
+    this.dispatchEvent(new CustomEvent('living-wccell_i-die', { detail: this.id }));
     this.remove();
   }
 
@@ -108,6 +120,7 @@ export class LivingWccell extends LitElement {
     this._setStyles();
 
     if (!this.stopStatus) {
+      // eslint-disable-next-line no-new
       requestAnimationFrame(this.moveMode1.bind(this));
     }
   }
@@ -141,16 +154,23 @@ export class LivingWccell extends LitElement {
       this.diameter = `${parseInt(this.diameter, 10) + 5}px`;
       this._setStyles();
     }
+    if (this.age >= this.cycle.reproduction) {
+      this.reproductionStatus = true;
+    }
   }
 
   _livingWccellMoveEvent() {
     document.dispatchEvent(
-      new CustomEvent('living-wccell-move', {
+      new CustomEvent('living-wccell_move', {
         detail: {
           id: this.id,
           position: this.position,
           diameter: this.diameter,
-          age: this.age
+          age: this.age,
+          reproductionStatus: this.reproductionStatus,
+          sterile: this.sterile,
+          gender: this.gender,
+          numChildren: this.numChildren,
         }
       })
     );
@@ -166,6 +186,16 @@ export class LivingWccell extends LitElement {
     if (this.age === this.cycle.life - 1) {
       styles.animationName = 'death' ;
     }
+    if (this.sterile) {
+      styles.opacity = '0.5';
+    } else {
+      styles.opacity = '1';
+    }
+    if (this.gender === 'male') {
+      styles.border = '5px solid #000';
+    } else {
+      styles.border = '5px dotted #000';
+    }
   }
 
   _searchForACell(e) {
@@ -174,6 +204,7 @@ export class LivingWccell extends LitElement {
       if (this._doItFoundACell(e)) {
         this._otherCellFound(e);
       }
+      // this.specimensNumber[e.detail.id] = e.detail.age;
     }
   }
 
@@ -192,44 +223,66 @@ export class LivingWccell extends LitElement {
 
   _otherCellFound(e) {
     if (!this.memory.includes(e.detail.id)) {
-      if (this.age >= this.cycle.reproduction && this.reproductionStatus) {
-        this._insertCell(e);
+      if (document.querySelectorAll("living-wccell").length <= this.maxCellsControl/2 && this.sterile) {
+        this.sterile = false;
       }
-      // console.log(`${this.id} found a cell with id ${e.detail.id}`);
-      this.memory.push(e.detail.id);
-      // dispatch stopLife event
-      // document.dispatchEvent(new CustomEvent('living-wccell-STOP'));
+      if (this.reproductionStatus &&
+          !this.sterile && 
+          e.detail.reproductionStatus && 
+          !e.detail.sterile && 
+          this.numChildren <= this.maxNumChildren && 
+          e.detail.numChildren <= this.maxNumChildren &&
+          this.gender === 'female' &&
+          e.detail.gender === 'male') {
+        this._insertCell(e);
+        this.memory.push(e.detail.id);
+        this.numChildren += 1;
+      }
     }
   }
 
-  _stopReproduction() {
-    this.reproductionStatus = false;
+  _restartMyLife() {
+    this._stopMyLife();
+    this._startMyLife();
+    this.move();
   }
 
-  _stopLife() {
+  _startMyLife() {
+    this.stopStatus = false;
+    this._deathTimer = setTimeout(this.death, this._deathTime);
+    this.growthId = setInterval(this.growth, this._growthTime);
+    document.addEventListener('living-wccell_move', this._searchForACell);
+    this._searchForACell = this._searchForACell.bind(this);
+  }
+
+  _stopMyLife() {
     this.stopStatus = true;
     clearInterval(this.growthId);
     clearTimeout(this._deathTimer);
-    // clearInterval(this.moveId);
-    document.removeEventListener('living-wccell-move', this._searchForACell);
+    document.removeEventListener('living-wccell_move', this._searchForACell);
+  }
+
+  addPositionCell(id) {
+    const newCell = document.getElementById(id);
+    if (newCell) {
+      newCell.position = {
+        top: this.position.top,
+        left: this.position.left,
+      };
+    }
   }
 
   _insertCell(e) {
     const idParts = this.id.split('-');
     const idPartsDetail = e.detail.id.split('-');
-    const id = `${idParts[0]}-${idParts[1]+idPartsDetail[1]}-${new Date().getTime()}`;
+    const id = `${idParts[0]}-${parseInt(idParts[1]+idPartsDetail[1], 10)}-${parseInt(Math.random() * 100000, 10)}`;
     // console.log(`created cell with id ${id}`);
     if (!document.getElementById(id)) {
-      const livingWCcell = `<living-wccell id="${id}"></living-wccell>`;
+      const sterile = (document.querySelectorAll("living-wccell").length >= this.maxCellsControl) ? ' sterile="true"': '';
+      const livingWCcell = `<living-wccell id="${id}" max-cells-control="${this.maxCellsControl}" mode-move="${this.modeMove}"${sterile}></living-wccell>`;
       this.worldLayer.insertAdjacentHTML('beforeend', livingWCcell);
       setTimeout(() => {
-        const newCell = document.getElementById(id);
-        if (newCell) {
-          newCell.position = {
-            top: `${parseInt(this.position.top, 10) + 50}px`,
-            left: `${parseInt(this.position.left, 10) + 50}px`
-          };
-        }
+        this.addPositionCell(id);
       }, 100);
     }
   }

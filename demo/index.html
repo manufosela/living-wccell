@@ -5,6 +5,18 @@
     <style>
       header {
         margin: 0.5rem 0;
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        justify-content: center;
+      }
+
+      header > * {
+        margin: 0.5rem 0;
+      }
+
+      button {
+        margin: 0 0.5rem;
       }
 
       main {
@@ -37,6 +49,18 @@
         text-align: center;
       }
 
+      .imposion {
+        animation: implosion 0.3s ease-in-out;
+      } 
+
+      @keyframes implosion {
+        0% {
+          transform: scale(1);
+        }
+        100% {
+          transform: scale(0);
+        }
+      }
     </style>
   </head>
   <body>
@@ -45,40 +69,117 @@
       <header>
         <h1>Cells System</h1>
         <label for="numcells">Num Cells: <input type="number" id="numcells" name="numcells" value="32"></label>
-        <button id="btnStart">Start</button>
+        <label for="maxcellscontrols">Max Cells in the world: <input type="number" id="maxcellscontrols" name="maxcellscontrols" value="70"></label>
+        <label for="typecellsmove">Type Cells Move: <select id="typecellsmove" name="typecellsmove">
+          <option value="vibration" selected>Vibration</option>
+          <option value="lineal">Lineal</option>
+        </select></label>
+        <div>
+          <button id="btnStart">Start</button><button id="btnStop">Stop</button>
+        </div>
+        <div id="worldage">World Age: 0d 0h 0m 0s</div>
+        <div id="info">Cells Alive: - Cells Sterile: - Cells Fertile:</div>
+        <div id="info2">Cells Male: - Cells Female: </div>
+        <div id="info3">Extinciones: 0</div>
       </header>
       <section>
-        <li>Introcuce el número de células que quieres que se creen inicialmente y pulsa start.
-        <li>Se crean ese número de células, todas con edad 0.
-        <li>Cada segundo, su edad aumenta hasta un máximo de entre 18 y 25, cada celula tiene un maximo de edad definido cuando nace.
-        <li>Cuando cumplen su edad máxima desaparece.
-        <li>Son fertiles con una edad de entre 8 y 15.
-        <li>Se repoducen por contacto con otra celula, creando una nueva celula en un lugar aleatorio del mundo.
-        <li>Solo se pueden reproducir una vez con la misma celula.
-        <li>Todas las celulas se mueven aleatoriamente dentro de un radio de +/-10px desde su ultima posición
-        <li>El sistema detecta si se llega a un máximo de 200 celulas creadas y para el mundo
+        <details>
+          <summary>Datos para introducir:</summary>
+            <ul>
+              <li>Número de células que se creen inicialmente</li>
+              <li>Tipo de de movimiento de las celulas</li>
+              <li>Máximo numero de celulas con poder reproductivo</li>
+            </ul>
+        </details>
+        <p>Una vez configurado pulsa start y se creará un mundo auto gestionado por sus reglas</p>
+        <details>
+          <summary>Estas son las reglas:</summary>
+          <ul>
+            <li>Todas las celulas nacen con edad 0, un genero aleatorio y un color aleatorio.
+            <li>Cada segundo, su edad aumenta hasta un máximo de entre 18 y 25, cada celula tiene un maximo de edad definido cuando nace.
+            <li>Cuando cumplen su edad máxima desaparece.
+            <li>Son fertiles con una edad de entre 8 y 15.
+            <li>Se repoducen por contacto con otra celula de genero contrario
+            <li>Solo crean la nueva celula las celulas con genero femenino, creando esa nueva celula en la posicion de la madre
+            <li>Solo se pueden reproducir una vez con la misma celula.
+            <li>Cada céula solo puede ser padres de un maximo de 3 hijos</li>
+            <>Todas las celulas se mueven aleatoriamente. Si es en modo 'vibration' dentro de un radio de +/-10px desde su ultima posición. Si es en modo lineal, se desplazan linealmente en la dirección que llevaban y rebotan en los bordes del contenedor.
+            <li>Si el numero de células es mayor del maximo numero de celulas con poder reproductivo permitidas, las que nacen, nacen esteriles, aunque tengan edad para ello</li>
+            <li>Si el número de células del mundo decae por debajo de la mitad del maximo numero de celuclas con poder reproductivo, las celulas que existan se vuelven fertiles</li>
+            <li>El sistema tiene un sistema de control de población, si detecta si se llega a un máximo del doble de celulas fertiles, hace un exterminio del 90% de la población</li>
+          </ul>
+        </details>
       </section>
     </main>
 
     <script type="module" src="../living-wccell.js"></script>
     <script>
+      let startDate;
+      let maxCellsControl;
+      let modeMove;
+      let stopped = false;
+      let extictions = 0;
+
       function insertCell(id) {
-        const livingWCcell = `<living-wccell id="${id}"></living-wccell>`;
+        const livingWCcell = `<living-wccell id="${id}" max-cells-control="${maxCellsControl}" mode-move="${modeMove}"></living-wccell>`;
         document.querySelector('.cellsworld').insertAdjacentHTML('beforeend', livingWCcell);
       }
+
       function createCells(numCells) {
         for (let cell = 0; cell < numCells; cell += 1) {
           insertCell(`cell-${cell}`);
         }
       }
+
+      function getWorldAge() {
+        const now = new Date();
+        const timeDifference = now - startDate;
+
+        const days = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDifference % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeDifference % (1000 * 60)) / 1000);
+
+        return `World Age: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+      }
       function police() {
         const numCells = document.querySelectorAll("living-wccell").length;
-        if (numCells > 200) {
-          document.dispatchEvent(new CustomEvent("living-wccell-STOP"));
-          console.log("living-wccell STOPPED with", numCells, "cells");
+        if (numCells > parseInt(document.querySelector("living-wccell").maxCellsControl, 10) * 2) {
+          if (stopped === false) {
+            document.dispatchEvent(new CustomEvent("living-wccell_STOP"));
+            console.log("living-wccell STOPPED with", numCells, "cells");
+            stopped = true;
+
+            setTimeout(async () => {
+              const cells = document.querySelectorAll("living-wccell");
+              const cellsToDelete = Math.floor(numCells * 0.9);
+              for (let cell = 0; cell < cellsToDelete; cell += 1) {
+                cells[cell].classList.add("implosion");
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                cells[cell].remove();
+              }
+              document.dispatchEvent(new CustomEvent("living-wccell_RESTART"));
+              console.log("living-wccell RESTARTED");
+              stopped = false;
+              extictions += 1;
+              document.getElementById('info3').innerHTML = `Extinciones: ${extictions}`;
+            }, 1000);
+          }
         }
+        const numCellsAlive = document.querySelectorAll('living-wccell').length;
+        const numCellsSterile = document.querySelectorAll('living-wccell[sterile]').length;
+        const numCellsFertile = numCellsAlive - numCellsSterile;
+        const numCellsFemale = document.querySelectorAll('living-wccell[gender="female"]').length;
+        const numCellsMale = numCellsAlive - numCellsFemale;
+        document.getElementById('worldage').innerHTML = getWorldAge();
+        document.getElementById('info').innerHTML = `Cells Alive: ${numCellsAlive} - Cells Sterile: ${numCellsSterile} - Cells Fertile: ${numCellsFertile}`;
+        document.getElementById('info2').innerHTML = `Cells Male: ${numCellsMale} - Cells Female: ${numCellsFemale}`;
+        requestAnimationFrame(police);
       }
       function start() {
+        startDate = new Date();
+        maxCellsControl = document.getElementById("maxcellscontrols").value;
+        modeMove = document.getElementById("typecellsmove").value;
         [...document.querySelectorAll("living-wccell")].forEach((el) => {
           if (el) {
             el.remove();
@@ -86,11 +187,16 @@
         });
         const numCells = document.getElementById("numcells").value;
         createCells(numCells);
-        setInterval(police, 5000);
+        police();
+      }
+
+      function stop() {
+        document.dispatchEvent(new CustomEvent("living-wccell_STOP"));
       }
 
       window.onload = () => {
         document.getElementById("btnStart").addEventListener("click", start);
+        document.getElementById("btnStop").addEventListener("click", stop);
       };
 
     </script>
