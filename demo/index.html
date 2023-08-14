@@ -49,13 +49,57 @@
         text-align: center;
       }
 
-      .imposion {
-        animation: implosion 0.3s ease-in-out;
+      .button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s, color 0.3s;
+      }
+
+      .btnInit {
+        background-color: #3498db;
+        color: #fff;
+      }
+
+      .btnStart {
+        background-color: #27ae60;
+        color: #fff;
+      }
+
+      .btnStop {
+        background-color: #e74c3c;
+        color: #fff;
+      }
+
+      .button:hover {
+        background-color: #2c3e50;
+      }
+
+      .implosion {
+        animation: implosion 1s linear forwards;
       } 
 
       @keyframes implosion {
         0% {
           transform: scale(1);
+        }
+        25% {
+          transform: scale(1.5);
+        }
+        50% {
+          transform: scale(1);
+        }
+        75% {
+          transform: scale(0.5);
         }
         100% {
           transform: scale(0);
@@ -74,8 +118,8 @@
           <option value="vibration" selected>Vibration</option>
           <option value="lineal">Lineal</option>
         </select></label>
-        <div>
-          <button id="btnStart">Start</button><button id="btnStop">Stop</button>
+        <div class="button-container">
+          <button id="btnInit" class="btnInit">Init</button><button id="btnStart" class="btnStart">Start</button><button id="btnStop" class="btnStop">Stop</button>
         </div>
         <div id="worldage">World Age: 0d 0h 0m 0s</div>
         <div id="info">Cells Alive: - Cells Sterile: - Cells Fertile:</div>
@@ -91,7 +135,7 @@
               <li>Máximo numero de celulas con poder reproductivo</li>
             </ul>
         </details>
-        <p>Una vez configurado pulsa start y se creará un mundo auto gestionado por sus reglas</p>
+        <p>Una vez configurado pulsa Init y se creará un mundo auto gestionado por sus reglas</p>
         <details>
           <summary>Estas son las reglas:</summary>
           <ul>
@@ -176,7 +220,7 @@
         document.getElementById('info2').innerHTML = `Cells Male: ${numCellsMale} - Cells Female: ${numCellsFemale}`;
         requestAnimationFrame(police);
       }
-      function start() {
+      function init() {
         startDate = new Date();
         maxCellsControl = document.getElementById("maxcellscontrols").value;
         modeMove = document.getElementById("typecellsmove").value;
@@ -190,11 +234,16 @@
         police();
       }
 
+      function start() {
+        document.dispatchEvent(new CustomEvent("living-wccell_RESTART"));
+      }
+
       function stop() {
         document.dispatchEvent(new CustomEvent("living-wccell_STOP"));
       }
 
       window.onload = () => {
+        document.getElementById("btnInit").addEventListener("click", init);
         document.getElementById("btnStart").addEventListener("click", start);
         document.getElementById("btnStop").addEventListener("click", stop);
       };
