@@ -138,16 +138,18 @@
         <p>Una vez configurado pulsa Init y se creará un mundo auto gestionado por sus reglas</p>
         <details>
           <summary>Estas son las reglas:</summary>
-          <ul>
-            <li>Todas las celulas nacen con edad 0, un genero aleatorio y un color aleatorio.
-            <li>Cada segundo, su edad aumenta hasta un máximo de entre 18 y 25, cada celula tiene un maximo de edad definido cuando nace.
-            <li>Cuando cumplen su edad máxima desaparece.
-            <li>Son fertiles con una edad de entre 8 y 15.
-            <li>Se repoducen por contacto con otra celula de genero contrario
-            <li>Solo crean la nueva celula las celulas con genero femenino, creando esa nueva celula en la posicion de la madre
-            <li>Solo se pueden reproducir una vez con la misma celula.
+          <>
+            <li>Todas las celulas nacen con edad 0, un genero aleatorio y un color aleatorio.</li>
+            <li>Cada segundo, su edad aumenta hasta un máximo de entre 18 y 25, cada celula tiene un maximo de edad definido cuando nace.</li>
+            <li>Cuando cumplen su edad máxima desaparece.</li>
+            <li>Son fertiles con una edad de entre 8 y 15.</li>
+            <li>Se repoducen por contacto con otra celula de genero contrario</li>
+            <li>Solo procrean nuevas celulas las celulas con genero femenino (borde discontinuo), creando esa nueva celula en la posicion de la madre.</li>
+            <li>Solo se pueden reproducir una vez con la misma celula.</li>
             <li>Cada céula solo puede ser padres de un maximo de 3 hijos</li>
-            <>Todas las celulas se mueven aleatoriamente. Si es en modo 'vibration' dentro de un radio de +/-10px desde su ultima posición. Si es en modo lineal, se desplazan linealmente en la dirección que llevaban y rebotan en los bordes del contenedor.
+            <li>Todas las celulas se mueven aleatoriamente.</li>
+            <li>Si se mueven en modo 'vibration' se mueven dentro de un radio de +/-10px desde su ultima posición.</li>
+            <li>Si se mueven en modo lineal, se desplazan linealmente en la dirección que llevaban y rebotan en los bordes del contenedor.</li>
             <li>Si el numero de células es mayor del maximo numero de celulas con poder reproductivo permitidas, las que nacen, nacen esteriles, aunque tengan edad para ello</li>
             <li>Si el número de células del mundo decae por debajo de la mitad del maximo numero de celuclas con poder reproductivo, las celulas que existan se vuelven fertiles</li>
             <li>El sistema tiene un sistema de control de población, si detecta si se llega a un máximo del doble de celulas fertiles, hace un exterminio del 90% de la población</li>
